@@ -1,19 +1,21 @@
-package server
+package game_server
 
 import (
 	"bufio"
 	"errors"
 	"github.com/sirupsen/logrus"
+	"io"
 	"net"
 	"net/textproto"
+	"wheel_of_fortune/pkg/game"
 )
 
 type TcpGameServer struct {
 	logger      *logrus.Logger
-	gameFactory GameFactory
+	gameFactory game.GameFactory
 }
 
-func NewTcpGameServer(logger *logrus.Logger, factory GameFactory) *TcpGameServer {
+func NewTcpGameServer(logger *logrus.Logger, factory game.GameFactory) *TcpGameServer {
 	return &TcpGameServer{logger: logger, gameFactory: factory}
 }
 
@@ -38,13 +40,14 @@ func (s *TcpGameServer) Start(params Params) error {
 	}
 
 	defer s.closeListener(l)
-
+	s.logger.Info("Start listening")
 	for {
 		conn, err := l.Accept()
 		if err != nil {
 			s.logger.Warnf("Failed to accept connection: %v", err)
 			continue
 		}
+		s.logger.Info("Accept client")
 		go s.handleConnection(conn)
 	}
 }
@@ -56,9 +59,9 @@ func (s *TcpGameServer) handleConnection(conn net.Conn) {
 
 	defer s.closeConn(conn)
 
-	game := s.gameFactory.NewGame()
-	err := game.Start(&TCPMessageSender{writer: writer}, &TCPMessageAcceptor{reader: tp})
-	if err != nil {
+	gameInstance := s.gameFactory.NewGame()
+	err := gameInstance.Start(&TCPMessageSender{writer: writer}, &TCPMessageAcceptor{reader: tp, writer: writer})
+	if err != nil && err != io.EOF {
 		s.logger.Warnf("Game failed with error: %v", err)
 	}
 }
@@ -68,11 +71,11 @@ type TCPMessageSender struct {
 }
 
 func (s *TCPMessageSender) Send(msg string) error {
-	writed, err := s.writer.Write([]byte(msg))
+	writed, err := s.writer.Write([]byte(msg + "\n"))
 	if err != nil {
 		return err
 	}
-	if writed < len(msg) {
+	if writed < len(msg)+1 {
 		return errors.New("fail to write all bytes to writer")
 	}
 
@@ -81,8 +84,18 @@ func (s *TCPMessageSender) Send(msg string) error {
 
 type TCPMessageAcceptor struct {
 	reader *textproto.Reader
+	writer *bufio.Writer
 }
 
 func (acceptor *TCPMessageAcceptor) Accept() (string, error) {
+	_, err := acceptor.writer.WriteString("\n")
+	if err != nil {
+		return "", err
+	}
+	err = acceptor.writer.Flush()
+	if err != nil {
+		return "", err
+	}
+
 	return acceptor.reader.ReadLine()
 }

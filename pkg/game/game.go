@@ -1,10 +1,10 @@
-package server
+package game
 
 import (
 	"bytes"
 	"fmt"
 	"regexp"
-	"wheel_of_fortune/db"
+	"wheel_of_fortune/pkg/db"
 )
 
 type MessageSender interface {
@@ -53,10 +53,10 @@ func isValidAns(ans string) bool {
 }
 
 const (
-	WelcomeMsg    = "Welcome!\n"
+	WelcomeMsg    = "Welcome!"
 	ClosedChar    = '*'
-	InvalidAnswer = "Invalid answer! Your answer must be a letter of the English language. Please try again\n"
-	WinMessage    = "Congratulations! You win!\n"
+	InvalidAnswer = "Invalid answer! Your answer must be a letter of the English language. Please try again"
+	WinMessage    = "Congratulations! You win!"
 )
 
 func (w *WheelOfFortune) Start(sender MessageSender, acceptor MessageAcceptor) error {
@@ -84,6 +84,10 @@ func (w *WheelOfFortune) Start(sender MessageSender, acceptor MessageAcceptor) e
 		w.updateState(int32(answer[0]))
 
 		if w.isWin() {
+			err = sender.Send(w.word)
+			if err != nil {
+				return err
+			}
 			err = sender.Send(WinMessage)
 			if err != nil {
 				return err
@@ -123,7 +127,6 @@ func (w *WheelOfFortune) getCurrentState() string {
 			msgBuffer.WriteRune(ClosedChar)
 		}
 	}
-	msgBuffer.WriteRune('\n')
 	return msgBuffer.String()
 }
 

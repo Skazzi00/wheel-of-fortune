@@ -1,4 +1,4 @@
-package server
+package game_server
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ type Error struct {
 }
 
 func (e Error) Error() string {
-	return fmt.Sprintf("Game server error: %v", e.originalErr)
+	return fmt.Sprintf("Game game_server error: %v", e.originalErr)
 }
 
 func (e Error) Unwrap() error {

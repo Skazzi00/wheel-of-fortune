@@ -1,4 +1,4 @@
-package server
+package game_server
 
 type Params struct {
 	Port string
