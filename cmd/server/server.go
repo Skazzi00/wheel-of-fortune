@@ -15,7 +15,7 @@ const (
 	DefaultTries = 30
 )
 
-var DefaultWordsFilename, _ = filepath.Abs("../../words.txt")
+var DefaultWordsFilename, _ = filepath.Abs("words.txt")
 
 type Flags struct {
 	WordsFilename *string
