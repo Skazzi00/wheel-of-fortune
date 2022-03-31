@@ -4,16 +4,18 @@ import (
 	"flag"
 	"fmt"
 	"github.com/sirupsen/logrus"
+	"path/filepath"
 	"wheel_of_fortune/pkg/db"
 	"wheel_of_fortune/pkg/game"
 	"wheel_of_fortune/pkg/game_server"
 )
 
 const (
-	DefaultPort          = "8888"
-	DefaultWordsFilename = "/text.txt"
-	DefaultTries         = 30
+	DefaultPort  = "8888"
+	DefaultTries = 30
 )
+
+var DefaultWordsFilename, _ = filepath.Abs("../../words.txt")
 
 type Flags struct {
 	WordsFilename *string
